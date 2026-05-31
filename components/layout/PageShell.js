@@ -2,11 +2,11 @@ import { getSessionProfile } from "@/lib/data";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 
 export async function PageShell({ children }) {
-  const { profile } = await getSessionProfile();
+  const { user, profile } = await getSessionProfile();
 
   return (
     <div className="min-h-dvh bg-[#F7F8F6]">
-      <SiteHeader profile={profile} />
+      <SiteHeader user={user} profile={profile} />
       {children}
     </div>
   );

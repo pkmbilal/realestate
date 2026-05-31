@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { signOut } from "@/app/actions";
 
-export function SiteHeader({ profile }) {
+export function SiteHeader({ user, profile }) {
   return (
     <header className="border-b border-zinc-200 bg-white">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
@@ -10,11 +10,12 @@ export function SiteHeader({ profile }) {
         </Link>
         <nav className="flex items-center gap-4 text-sm font-medium text-zinc-700">
           <Link href="/">Properties</Link>
+          {user ? <Link href="/saved">Saved</Link> : null}
           {profile?.role === "admin" ? <Link href="/admin">Admin</Link> : null}
           {profile && ["agent", "broker"].includes(profile.role) ? (
             <Link href="/agent">Agent</Link>
           ) : null}
-          {profile ? (
+          {user ? (
             <form action={signOut}>
               <button className="rounded-md border border-zinc-300 px-3 py-2 text-zinc-900">
                 Sign out

@@ -293,3 +293,43 @@ export async function createLead(formData) {
 
   redirect(`/properties/${propertyId}?message=Your enquiry was sent.`);
 }
+
+export async function toggleSavedProperty(formData) {
+  const supabase = await createClient();
+  const propertyId = value(formData, "property_id");
+  const returnTo = value(formData, "return_to") || "/";
+  const safeReturnTo = returnTo.startsWith("/") && !returnTo.startsWith("//") ? returnTo : "/";
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect(
+      `/auth/login?message=${encodeURIComponent("Login to save properties.")}&redirect_to=${encodeURIComponent(
+        safeReturnTo,
+      )}`,
+    );
+  }
+
+  const { data: existing } = await supabase
+    .from("saved_properties")
+    .select("id")
+    .eq("user_id", user.id)
+    .eq("property_id", propertyId)
+    .maybeSingle();
+
+  if (existing) {
+    await supabase.from("saved_properties").delete().eq("id", existing.id);
+  } else {
+    await supabase.from("saved_properties").insert({
+      user_id: user.id,
+      property_id: propertyId,
+    });
+  }
+
+  revalidatePath("/");
+  revalidatePath("/saved");
+  revalidatePath(`/properties/${propertyId}`);
+  redirect(safeReturnTo);
+}

@@ -1,28 +1,36 @@
 import Image from "next/image";
 import Link from "next/link";
 import { formatPrice } from "@/lib/data";
+import { SavePropertyButton } from "@/components/property/SavePropertyButton";
 
-export function PropertyCard({ property }) {
+export function PropertyCard({ property, isSaved = false, returnTo = "/" }) {
   const image = property.property_images?.[0]?.public_url;
 
   return (
     <article className="overflow-hidden rounded-lg border border-zinc-200 bg-white">
-      <Link href={`/properties/${property.id}`} className="block">
-        <div className="aspect-[4/3] bg-zinc-100">
-          {image ? (
-            <Image
-              className="h-full w-full object-cover"
-              src={image}
-              alt={property.title}
-              width={640}
-              height={480}
-            />
-          ) : (
-            <div className="flex h-full items-center justify-center text-sm text-zinc-500">
-              No image
-            </div>
-          )}
+      <div className="relative">
+        <Link href={`/properties/${property.id}`} className="block">
+          <div className="aspect-[4/3] bg-zinc-100">
+            {image ? (
+              <Image
+                className="h-full w-full object-cover"
+                src={image}
+                alt={property.title}
+                width={640}
+                height={480}
+              />
+            ) : (
+              <div className="flex h-full items-center justify-center text-sm text-zinc-500">
+                No image
+              </div>
+            )}
+          </div>
+        </Link>
+        <div className="absolute right-3 top-3">
+          <SavePropertyButton propertyId={property.id} isSaved={isSaved} returnTo={returnTo} compact />
         </div>
+      </div>
+      <Link href={`/properties/${property.id}`} className="block">
         <div className="space-y-3 p-4">
           <div>
             <p className="text-lg font-semibold text-zinc-950">

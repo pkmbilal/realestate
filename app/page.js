@@ -4,9 +4,23 @@ import { PropertyCard } from "@/components/property/PropertyCard";
 import { PROPERTY_TYPES, SAUDI_CITIES } from "@/lib/constants/options";
 import { createClient } from "@/lib/supabase/server";
 
+function buildReturnTo(searchParams) {
+  const params = new URLSearchParams();
+  Object.entries(searchParams || {}).forEach(([key, currentValue]) => {
+    const values = Array.isArray(currentValue) ? currentValue : [currentValue];
+    values.forEach((item) => {
+      if (item) params.append(key, item);
+    });
+  });
+
+  const query = params.toString();
+  return query ? `/?${query}` : "/";
+}
+
 export default async function Home(props) {
   const searchParams = await props.searchParams;
   const supabase = await createClient();
+  const returnTo = buildReturnTo(searchParams);
   let query = supabase
     .from("properties")
     .select("*, property_images(public_url, sort_order), profiles(full_name, phone, whatsapp, agency_name)")
@@ -23,6 +37,16 @@ export default async function Home(props) {
 
   const { data } = await query;
   const properties = data ?? [];
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const { data: savedData } = user && properties.length > 0
+    ? await supabase
+        .from("saved_properties")
+        .select("property_id")
+        .in("property_id", properties.map((property) => property.id))
+    : { data: [] };
+  const savedPropertyIds = new Set((savedData || []).map((item) => item.property_id));
 
   return (
     <PageShell>
@@ -93,7 +117,12 @@ export default async function Home(props) {
           {properties.length > 0 ? (
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {properties.map((property) => (
-                <PropertyCard key={property.id} property={property} />
+                <PropertyCard
+                  key={property.id}
+                  property={property}
+                  isSaved={savedPropertyIds.has(property.id)}
+                  returnTo={returnTo}
+                />
               ))}
             </div>
           ) : (
