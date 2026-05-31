@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { createLead } from "@/app/actions";
 import { PageShell } from "@/components/layout/PageShell";
 import { Field, inputClass } from "@/components/forms/Field";
+import { SavePropertyButton } from "@/components/property/SavePropertyButton";
 import { formatPrice } from "@/lib/data";
 import { createClient } from "@/lib/supabase/server";
 
@@ -32,6 +33,13 @@ export default async function PropertyDetailPage(props) {
         .select("full_name, email, phone")
         .eq("id", user.id)
         .single()
+    : { data: null };
+  const { data: savedProperty } = user
+    ? await supabase
+        .from("saved_properties")
+        .select("id")
+        .eq("property_id", property.id)
+        .maybeSingle()
     : { data: null };
   const loginHref = `/auth/login?message=${encodeURIComponent(
     "Login to send an enquiry.",
@@ -76,10 +84,19 @@ export default async function PropertyDetailPage(props) {
               ) : null}
             </div>
             <div className="mt-8 rounded-lg border border-zinc-200 bg-white p-6">
-              <p className="text-2xl font-semibold text-zinc-950">
-                {formatPrice(property.price, property.purpose)}
-              </p>
-              <h1 className="mt-2 text-3xl font-semibold tracking-tight text-zinc-950">{property.title}</h1>
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div>
+                  <p className="text-2xl font-semibold text-zinc-950">
+                    {formatPrice(property.price, property.purpose)}
+                  </p>
+                  <h1 className="mt-2 text-3xl font-semibold tracking-tight text-zinc-950">{property.title}</h1>
+                </div>
+                <SavePropertyButton
+                  propertyId={property.id}
+                  isSaved={Boolean(savedProperty)}
+                  returnTo={`/properties/${property.id}`}
+                />
+              </div>
               <p className="mt-2 text-zinc-600">
                 {property.district}, {property.city}
               </p>
