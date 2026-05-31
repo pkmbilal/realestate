@@ -332,6 +332,40 @@ export async function updateLead(formData) {
   redirect(safeReturnTo);
 }
 
+export async function updateAgentProfile(formData) {
+  const { supabase, user } = await requireAgent();
+  const fullName = value(formData, "full_name");
+
+  if (!fullName) {
+    redirect("/agent/profile?error=Full name is required");
+  }
+
+  const bio = value(formData, "bio");
+  const { error } = await supabase
+    .from("profiles")
+    .update({
+      full_name: fullName,
+      phone: value(formData, "phone") || null,
+      whatsapp: value(formData, "whatsapp") || null,
+      agency_name: value(formData, "agency_name") || null,
+      city: value(formData, "city") || null,
+      license_number: value(formData, "license_number") || null,
+      bio: bio || null,
+      profile_public: formData.get("profile_public") === "on",
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", user.id);
+
+  if (error) {
+    redirect(`/agent/profile?error=${encodeURIComponent(error.message)}`);
+  }
+
+  revalidatePath("/agent");
+  revalidatePath("/agent/profile");
+  revalidatePath(`/agents/${user.id}`);
+  redirect("/agent/profile?message=Profile updated");
+}
+
 export async function toggleSavedProperty(formData) {
   const supabase = await createClient();
   const propertyId = value(formData, "property_id");

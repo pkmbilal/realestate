@@ -1,11 +1,11 @@
 import { notFound } from "next/navigation";
 import { PageShell } from "@/components/layout/PageShell";
 import { PropertyCard } from "@/components/property/PropertyCard";
-import { createClient } from "@/lib/supabase/server";
+import { getSessionProfile } from "@/lib/data";
 
 export default async function AgentProfilePage(props) {
   const { id } = await props.params;
-  const supabase = await createClient();
+  const { supabase, user, profile } = await getSessionProfile();
 
   const { data: agent } = await supabase
     .from("profiles")
@@ -14,6 +14,8 @@ export default async function AgentProfilePage(props) {
     .single();
 
   if (!agent) notFound();
+  const canViewHiddenProfile = user?.id === agent.id || profile?.role === "admin";
+  if (agent.profile_public === false && !canViewHiddenProfile) notFound();
 
   const { data: propertiesData } = await supabase
     .from("properties")
@@ -30,6 +32,7 @@ export default async function AgentProfilePage(props) {
           <p className="text-sm font-semibold uppercase tracking-wide text-teal-700">{agent.role}</p>
           <h1 className="mt-2 text-3xl font-semibold tracking-tight text-zinc-950">{agent.full_name}</h1>
           <p className="mt-2 text-zinc-600">{agent.agency_name} · {agent.city}</p>
+          {agent.bio ? <p className="mt-4 max-w-3xl whitespace-pre-line leading-7 text-zinc-700">{agent.bio}</p> : null}
           <div className="mt-4 flex flex-wrap gap-2">
             {agent.phone ? (
               <a className="rounded-md bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white" href={`tel:${agent.phone}`}>

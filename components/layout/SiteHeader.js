@@ -13,7 +13,10 @@ export function SiteHeader({ user, profile }) {
           {user ? <Link href="/saved">Saved</Link> : null}
           {profile?.role === "admin" ? <Link href="/admin">Admin</Link> : null}
           {profile && ["agent", "broker"].includes(profile.role) ? (
-            <Link href="/agent">Agent</Link>
+            <>
+              <Link href="/agent">Agent</Link>
+              <Link href="/agent/profile">Profile</Link>
+            </>
           ) : null}
           {user ? (
             <form action={signOut}>
