@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { getSessionProfile } from "@/lib/data";
 import { deletePropertyImage, getR2ConfigStatus, uploadPropertyImage } from "@/lib/r2/client";
 import { createClient } from "@/lib/supabase/server";
+import { LEAD_STATUSES } from "@/lib/constants/leads";
 
 function value(formData, key) {
   return String(formData.get(key) || "").trim();
@@ -292,6 +293,43 @@ export async function createLead(formData) {
   });
 
   redirect(`/properties/${propertyId}?message=Your enquiry was sent.`);
+}
+
+export async function updateLead(formData) {
+  const { supabase, user } = await requireAgent();
+  const leadId = value(formData, "lead_id");
+  const returnTo = value(formData, "return_to") || "/agent/leads";
+  const safeReturnTo = returnTo.startsWith("/") && !returnTo.startsWith("//") ? returnTo : "/agent/leads";
+  const status = value(formData, "status");
+  const followUpAt = value(formData, "follow_up_at");
+  const parsedFollowUpAt = followUpAt ? new Date(followUpAt) : null;
+
+  if (!LEAD_STATUSES.includes(status)) {
+    redirect(`${safeReturnTo}${safeReturnTo.includes("?") ? "&" : "?"}error=Invalid lead status`);
+  }
+
+  if (parsedFollowUpAt && Number.isNaN(parsedFollowUpAt.getTime())) {
+    redirect(`${safeReturnTo}${safeReturnTo.includes("?") ? "&" : "?"}error=Invalid follow-up date`);
+  }
+
+  const { error } = await supabase
+    .from("leads")
+    .update({
+      status,
+      agent_notes: value(formData, "agent_notes") || null,
+      follow_up_at: parsedFollowUpAt ? parsedFollowUpAt.toISOString() : null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", leadId)
+    .eq("agent_id", user.id);
+
+  if (error) {
+    redirect(`${safeReturnTo}${safeReturnTo.includes("?") ? "&" : "?"}error=${encodeURIComponent(error.message)}`);
+  }
+
+  revalidatePath("/agent");
+  revalidatePath("/agent/leads");
+  redirect(safeReturnTo);
 }
 
 export async function toggleSavedProperty(formData) {

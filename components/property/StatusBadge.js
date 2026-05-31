@@ -5,6 +5,11 @@ const styles = {
   rejected: "bg-red-100 text-red-800",
   approved: "bg-emerald-100 text-emerald-800",
   suspended: "bg-zinc-200 text-zinc-800",
+  new: "bg-sky-100 text-sky-800",
+  contacted: "bg-indigo-100 text-indigo-800",
+  qualified: "bg-teal-100 text-teal-800",
+  closed: "bg-emerald-100 text-emerald-800",
+  lost: "bg-zinc-200 text-zinc-800",
 };
 
 export function StatusBadge({ status }) {

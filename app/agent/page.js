@@ -23,17 +23,22 @@ export default async function AgentDashboard(props) {
 
   const { data: leadsData } = await supabase
     .from("leads")
-    .select("id, property_id, customer_name, customer_phone, customer_email, message, created_at, properties(title)")
+    .select("id, property_id, customer_name, customer_phone, customer_email, message, status, follow_up_at, created_at, properties(title)")
     .eq("agent_id", user.id)
     .order("created_at", { ascending: false })
     .limit(8);
   const leads = leadsData ?? [];
 
+  const { count: leadCount } = await supabase
+    .from("leads")
+    .select("id", { count: "exact", head: true })
+    .eq("agent_id", user.id);
+
   const stats = {
     total: properties.length,
     pending: properties.filter((item) => item.status === "pending").length,
     published: properties.filter((item) => item.status === "published").length,
-    leads: leads.length,
+    leads: leadCount || 0,
   };
 
   return (
@@ -94,17 +99,32 @@ export default async function AgentDashboard(props) {
           </div>
         </section>
         <section className="mt-8 rounded-lg border border-zinc-200 bg-white">
-          <div className="border-b border-zinc-200 p-4">
+          <div className="flex items-center justify-between gap-4 border-b border-zinc-200 p-4">
             <h2 className="font-semibold text-zinc-950">Recent leads</h2>
+            <Link className="text-sm font-semibold text-teal-700" href="/agent/leads">
+              Manage leads
+            </Link>
           </div>
           <div className="divide-y divide-zinc-200">
             {leads.map((lead) => (
               <div key={lead.id} className="p-4">
-                <p className="font-medium text-zinc-950">{lead.customer_name || "Customer enquiry"}</p>
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="font-medium text-zinc-950">{lead.customer_name || "Customer enquiry"}</p>
+                  <StatusBadge status={lead.status} />
+                </div>
                 <p className="mt-1 text-sm text-zinc-600">
                   {lead.properties?.title} · {lead.customer_phone || lead.customer_email}
                 </p>
                 {lead.message ? <p className="mt-2 text-sm text-zinc-700">{lead.message}</p> : null}
+                {lead.follow_up_at ? (
+                  <p className="mt-2 text-xs font-medium text-zinc-500">
+                    Follow-up:{" "}
+                    {new Intl.DateTimeFormat("en-US", {
+                      dateStyle: "medium",
+                      timeStyle: "short",
+                    }).format(new Date(lead.follow_up_at))}
+                  </p>
+                ) : null}
               </div>
             ))}
             {leads.length === 0 ? <p className="p-6 text-sm text-zinc-600">No leads yet.</p> : null}
