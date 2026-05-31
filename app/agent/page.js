@@ -51,9 +51,14 @@ export default async function AgentDashboard(props) {
               Account status: <StatusBadge status={profile.approval_status} />
             </p>
           </div>
-          <Link className="rounded-md bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white" href="/agent/properties/new">
-            Add property
-          </Link>
+          <div className="flex flex-wrap gap-2">
+            <Link className="rounded-md border border-zinc-300 bg-white px-4 py-2.5 text-sm font-semibold text-zinc-900" href="/agent/profile">
+              Edit profile
+            </Link>
+            <Link className="rounded-md bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white" href="/agent/properties/new">
+              Add property
+            </Link>
+          </div>
         </div>
         {searchParams?.error ? (
           <p className="mt-4 rounded-md bg-red-50 p-3 text-sm text-red-800">{searchParams.error}</p>
