@@ -11,6 +11,10 @@ function value(formData, key) {
   return String(formData.get(key) || "").trim();
 }
 
+function safePath(path, fallback) {
+  return path.startsWith("/") && !path.startsWith("//") ? path : fallback;
+}
+
 function numberValue(formData, key, fallback = 0) {
   const raw = value(formData, key);
   return raw === "" ? fallback : Number(raw);
@@ -226,6 +230,7 @@ export async function deleteImage(formData) {
 
 export async function updateAgentStatus(formData) {
   const { supabase } = await requireAdmin();
+  const returnTo = safePath(value(formData, "return_to") || "/admin/agents", "/admin/agents");
 
   await supabase
     .from("profiles")
@@ -236,12 +241,13 @@ export async function updateAgentStatus(formData) {
     .eq("id", value(formData, "agent_id"));
 
   revalidatePath("/admin/agents");
-  redirect("/admin/agents");
+  redirect(returnTo);
 }
 
 export async function updatePropertyStatus(formData) {
   const { supabase } = await requireAdmin();
   const status = value(formData, "status");
+  const returnTo = safePath(value(formData, "return_to") || "/admin/properties", "/admin/properties");
 
   await supabase
     .from("properties")
@@ -253,7 +259,7 @@ export async function updatePropertyStatus(formData) {
 
   revalidatePath("/");
   revalidatePath("/admin/properties");
-  redirect("/admin/properties");
+  redirect(returnTo);
 }
 
 export async function createLead(formData) {
@@ -299,7 +305,7 @@ export async function updateLead(formData) {
   const { supabase, user } = await requireAgent();
   const leadId = value(formData, "lead_id");
   const returnTo = value(formData, "return_to") || "/agent/leads";
-  const safeReturnTo = returnTo.startsWith("/") && !returnTo.startsWith("//") ? returnTo : "/agent/leads";
+  const safeReturnTo = safePath(returnTo, "/agent/leads");
   const status = value(formData, "status");
   const followUpAt = value(formData, "follow_up_at");
   const parsedFollowUpAt = followUpAt ? new Date(followUpAt) : null;
@@ -370,7 +376,7 @@ export async function toggleSavedProperty(formData) {
   const supabase = await createClient();
   const propertyId = value(formData, "property_id");
   const returnTo = value(formData, "return_to") || "/";
-  const safeReturnTo = returnTo.startsWith("/") && !returnTo.startsWith("//") ? returnTo : "/";
+  const safeReturnTo = safePath(returnTo, "/");
 
   const {
     data: { user },
